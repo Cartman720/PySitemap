@@ -24,7 +24,7 @@ with open(args.output, "w") as file:
 	file.write('<?xml version="1.0" encoding="UTF-8"?>\n\t<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
 
 	for link in links:
-		file.write("\n\t\t<url>\n\t\t\t<loc>\n\t\t\t\t{0}{1}/\n\t\t\t</loc>\n\t\t</url>".format(args.url, link))
+		file.write("\n\t\t<url>\n\t\t\t<loc>\n\t\t\t\t{0}{1}/\n\t\t\t</loc>\n\t\t</url>".format(args.url.rstrip("/"), link))
 
 	file.write('</urlset>')
 
