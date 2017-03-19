@@ -3,12 +3,9 @@
 Simple sitemap generator with Python 3
 
 ## Description
----
 This is simple and easy sitemap generator written in python which can help you easily create sitemap of your website for SEO and other purposes.
 
 ## Options
----
-
 Simply you can run with thisthis command and program will create sitemap.xml with links from url option
 ```
 python main.py --url="https://www.finstead.com"
