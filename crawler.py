@@ -44,7 +44,7 @@ class Crawler:
 			url_parts = link.split("://")
 
 			not_in_list = link not in link_list
-			is_internal_link = link[0] is "/" or link.startswith(self.url) 
+			is_internal_link = link[0] is "/" or link.split("/")[0] is self.url.split("/")[0] 
 			excluded = False
 
 			if exclude_pattern:
