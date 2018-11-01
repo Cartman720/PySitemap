@@ -1,6 +1,8 @@
 import urllib.request
 from urllib.parse import urlsplit, urlunsplit, urljoin, urlparse
+from urllib.error import  URLError, HTTPError
 import re
+from datetime import datetime
 
 class Crawler:
 
@@ -8,11 +10,13 @@ class Crawler:
 	
 		self.url = self.normalize(url)
 		self.host = urlparse(self.url).netloc
+		self.domain = ""
 		self.exclude = exclude
 		self.no_verbose = no_verbose
 		self.found_links = []
+		self.error_links = []
+		self.redirect_links=[]
 		self.visited_links = [self.url]
-
 	def start(self):
 		self.crawl(self.url)
 
@@ -21,39 +25,60 @@ class Crawler:
 
 	def crawl(self, url):
 		if not self.no_verbose:
-			print("Parsing " + url)
+			print(len(self.found_links), "Parsing: " + url)
+		try:
+			response = urllib.request.urlopen(url)
+		except HTTPError as e:
+			print('HTTP Error code: ', e.code, ' ', url)
+			self.add_url(url, self.error_links, self.exclude)
+		except URLError as e:
+			print('Error: Failed to reach server. ', e.reason)
+		else:
 
-		response = urllib.request.urlopen(url)
-		page = str(response.read())
+			# Handle redirects
+			if url != response.geturl():
+				self.add_url(url, self.redirect_links, self.exclude)
+				url = response.geturl()
+				self.add_url(url, self.visited_links, self.exclude)
 
-		pattern = '<a [^>]*href=[\'|"](.*?)[\'"].*?>'
+			# TODO Handle last modified
+			last_modified = response.info()['Last-Modified']
+			# Fri, 19 Oct 2018 18:49:51 GMT
+			if last_modified:
+				dateTimeObject = datetime.strptime(last_modified, '%a, %d %b %Y %H:%M:%S %Z')
+#				print ("Last Modified:", dateTimeObject)
 
-		found_links = re.findall(pattern, page)
-		links = []
 
-		for link in found_links:
-			is_url = self.is_url(link)
+			# TODO Handle priority
 
-			if is_url:
-				is_internal = self.is_internal(link)
+			self.add_url(url, self.found_links, self.exclude)
 
-				if is_internal:
-					self.add_url(link, links, self.exclude)
-					self.add_url(link, self.found_links, self.exclude)
+			page = str(response.read())
+			pattern = '<a [^>]*href=[\'|"](.*?)[\'"].*?>'
 
-		for link in links:
-			if link not in self.visited_links:
+			page_links = re.findall(pattern, page)
+			links = []
+
+			for link in page_links:
+				is_url = self.is_url(link)
 				link = self.normalize(link)
+				if is_url:
+					if self.is_internal(link):
+						self.add_url(link, links, self.exclude)
+					elif self.is_relative(link):
+						link = urljoin( url , link )
+						self.add_url(link, links, self.exclude)
 
-				self.visited_links.append(link)
-				self.crawl(urljoin(self.url, link))
+			for link in links:
+				if link not in self.visited_links:
+					link = self.normalize(link)
+					self.visited_links.append(link)
+					self.crawl(link)
 
 	def add_url(self, link, link_list, exclude_pattern=None):
 		link = self.normalize(link)
-
 		if link:			
 			not_in_list = link not in link_list
-
 			excluded = False
 
 			if exclude_pattern:
@@ -65,11 +90,20 @@ class Crawler:
 
 	def normalize(self, url):
 		scheme, netloc, path, qs, anchor = urlsplit(url)
+		anchor = ''
 		return urlunsplit((scheme, netloc, path, qs, anchor))
 
 	def is_internal(self, url):
 		host = urlparse(url).netloc
-		return host == self.host or host == ''	
+		return host == self.host or self.domain in host
+
+	def is_relative(self, url):
+		host = urlparse(url).netloc
+		return host == ''
+
+#	TODO Proper related domain/ subdomains check
+#	def same_domain(self, url):
+#		host = urlparse(url).netloc
 
 	def is_url(self, url):
 		scheme, netloc, path, qs, anchor = urlsplit(url)
