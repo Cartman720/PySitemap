@@ -6,11 +6,11 @@ from datetime import datetime
 
 class Crawler:
 
-	def __init__(self, url, exclude=None, no_verbose=False):
+	def __init__(self, url, exclude=None, domain=None, no_verbose=False):
 	
 		self.url = self.normalize(url)
 		self.host = urlparse(self.url).netloc
-		self.domain = ""
+		self.domain = domain
 		self.exclude = exclude
 		self.no_verbose = no_verbose
 		self.found_links = []
@@ -95,7 +95,9 @@ class Crawler:
 
 	def is_internal(self, url):
 		host = urlparse(url).netloc
-		return host == self.host or self.domain in host
+		if self.domain:
+		   return self.domain in host
+		return host == self.host
 
 	def is_relative(self, url):
 		host = urlparse(url).netloc

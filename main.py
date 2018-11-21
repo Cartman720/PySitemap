@@ -14,7 +14,7 @@ parser.add_argument('--url', action="store", default="", help="For example https
 parser.add_argument('--exclude', action="store", default="", help="regex pattern to exclude. For example 'symbol/info' will exclude https://www.finstead.com/symbol/info/ORCL")
 parser.add_argument('--no-verbose', action="store_true", default="", help="print verbose output")
 parser.add_argument('--output', action="store", default="sitemap.xml", help="File path for output, if file exists it will be overwritten")
-
+parser.add_argument('--domain', action="store", default="", help="include subdomains of domain in search")
 # parsing parameters
 args = parser.parse_args()
 url = args.url
@@ -22,7 +22,7 @@ url = args.url
 found_links = []
 
 # initializeing crawler
-crawler = Crawler(url, exclude=args.exclude, no_verbose=args.no_verbose);
+crawler = Crawler(url, exclude=args.exclude, domain=args.domain, no_verbose=args.no_verbose);
 
 # fetch links
 links = crawler.start()
