@@ -22,8 +22,12 @@ class Crawler:
 	def crawl(self, url):
 		if not self.no_verbose:
 			print("Parsing " + url)
-
-		response = urllib.request.urlopen(url)
+		try:
+			response = urllib.request.urlopen(url)
+		except:
+			print('404 error')
+			return
+		
 		page = str(response.read())
 
 		pattern = '<a [^>]*href=[\'|"](.*?)[\'"].*?>'
